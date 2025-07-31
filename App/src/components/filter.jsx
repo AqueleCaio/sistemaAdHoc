@@ -1,62 +1,137 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Filters.css';
 import question from "../assets/tooltip.png";
+import { getTableNames, getTableAttributes, getRelatedTables } from '../services/controller';
 
 function Filters() {
-  const [selectedTable, setSelectedTable] = useState('');
-  const [selectedTables, setSelectedTables] = useState([]);
-
+  const [selectedTable, setSelectedTable] = useState(''); // Estado para a tabela selecionada
+  const [selectedTables, setSelectedTables] = useState([]); // Todas tabelas selecionadas
+  const [tables, setTables] = useState([]);
+  const [relatedTables, setRelatedTables] = useState([]); // Tabelas relacionadas à tabela selecionada
+  const [availableTables, setAvailableTables] = useState(tables); // Tabelas disponíveis para seleção
+  const [columns, setColumns] = useState([]);
   const [joinType, setJoinType] = useState('INNER JOIN');
-  const [selectedColumns, setSelectedColumns] = useState([
-    'countries.country_id',
-    'countries.country_name',
-    'countries.continent',
-    'countries.capital'
-  ]);
+  const [selectedColumns, setSelectedColumns] = useState([]);
 
-  const tables = [
-    { name: 'countries', label: 'Paletes' },
-    { name: 'economy', label: 'Economia' },
-    { name: 'demographics', label: 'Demografia' },
-    { name: 'health', label: 'Saúde' }
-  ];
 
-  const columns = [
-    { id: 'countries.country_id', name: 'ID do País' },
-    { id: 'countries.country_name', name: 'Nome do País' },
-    { id: 'countries.continent', name: 'Continente' },
-    { id: 'countries.capital', name: 'Capital' },
-    { id: 'economy.gdp', name: 'PIB' },
-    { id: 'demographics.population', name: 'População' },
-    { id: 'health.life_expectancy', name: 'Expectativa de Vida' }
-  ];
+  useEffect(() => {
+    async function fetchTables() {
+      const data = await getTableNames();
+      setTables(data.map(t => ({ name: t.table_name, label: t.table_name })));
+    }
+    fetchTables();
+  }, []);
 
-  const toggleColumn = (column) => {
-    if (selectedColumns.includes(column)) {
-      setSelectedColumns(selectedColumns.filter(c => c !== column));
+  useEffect(() => {
+    async function fetchColumns() {
+      const allColumns = [];
+
+      for (const table of selectedTables) {
+        const cols = await getTableAttributes(table);
+        cols.forEach(col => {
+          allColumns.push({
+            id: `${table}.${col.column_name}`,
+            name: `${table}.${col.column_name}`
+          });
+        });
+      }
+
+      setColumns(allColumns);
+    }
+
+    if (selectedTables.length > 0) {
+      fetchColumns();
     } else {
-      setSelectedColumns([...selectedColumns, column]);
+      setColumns([]);
+    }
+  }, [selectedTables]);
+
+  
+  // Função para remover uma tabela selecionada
+  const removeTable = (tableToRemove) => {
+    const newSelectedTables = selectedTables.filter(table => table !== tableToRemove);
+    setSelectedTables(newSelectedTables);
+
+    // Se não há mais tabelas selecionadas, resetamos para o estado inicial
+    if (newSelectedTables.length === 0) {
+      setAvailableTables([...tables]);
+      setRelatedTables([]);
+      setSelectedTable('');
+      return;
+    }
+
+   // Caso contrário, atualizamos as tabelas disponíveis
+    const lastSelected = newSelectedTables[newSelectedTables.length - 1];
+    updateAvailableTables(lastSelected, newSelectedTables);
+  };
+
+  // Função para atualizar as tabelas disponíveis
+  const updateAvailableTables = async (tableName, currentSelectedTables = selectedTables) => {
+    if (!tableName) {
+      setAvailableTables([...tables].filter(t => !currentSelectedTables.includes(t.name)));
+      return;
+    }
+
+    const data = await getRelatedTables(tableName);
+    const related = data.map(t => t.foreign_table);
+    setRelatedTables(related);
+
+    setAvailableTables(
+      tables.filter(table => 
+        (related.includes(table.name) || currentSelectedTables.includes(table.name)) &&
+        !currentSelectedTables.includes(table.name)
+      )
+    );
+  };
+
+  // Efeito para monitorar mudanças na tabela selecionada
+  useEffect(() => {
+    if (selectedTable) {
+      setSelectedTables(prev => [...prev, selectedTable]);
+      updateAvailableTables(selectedTable);
+    }
+  }, [selectedTable]);
+
+  // Função chamada quando uma tabela é selecionada
+  const handleTableSelect = (tableName) => {
+    setSelectedTable(tableName);
+    if (tableName) {
+      setSelectedTables(prev => [...prev, tableName]);
     }
   };
+
 
   return (
     <div className="filters">
       <h2 className="filters-title">Configurar Relatório</h2>
+
       <div className="section">
         <h3 className="section-title">Tabelas Disponíveis</h3>
         <div className="filter-column">
-          <select
-            className="filter-select"
-            value={selectedTable || ''}
-            onChange={(e) => setSelectedTable(e.target.value)}
-          >
-            <option value="">Selecione uma tabela</option>
-            {tables.map((table) => (
-              <option key={table.name} value={table.name}>
-                {table.name} ({table.label})
-              </option>
-            ))}
-          </select>
+         <select
+          className="filter-select"
+          value={selectedTable || ''}
+          onChange={(e) => setSelectedTable(e.target.value)}
+          disabled={availableTables.length === 0}
+        >
+          <option value="">{availableTables.length === 0 ? 'Nenhuma opção disponível' : 'Selecione uma tabela'}</option>
+          
+          {availableTables.map((table) => (
+            <option key={table.name} value={table.name}>
+              {table.name}
+            </option>
+          ))}
+        </select>
+
+        <div className="selected-tables-container">
+          {selectedTables.map(table => (
+            <div key={table} className="selected-table-item">
+              {table}
+              <button onClick={() => removeTable(table)}>Remover</button>
+            </div>
+          ))}
+        </div>
+
           <button
             className="add-button"
             onClick={() => {
@@ -70,28 +145,27 @@ function Filters() {
           </button>
         </div>
 
-      {selectedTables.length > 0 && (
-        <div>
-          <ul>
-            {selectedTables.map((table, index) => (
-              <li key={index}>
-                {table}
-                <button
-                  onClick={() =>
-                    setSelectedTables(selectedTables.filter((t) => t !== table))
-                  }
-                  className="remove_button"
-                  aria-label={`Remover ${table}`}
-                >
-                  &times;
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-
+        {selectedTables.length > 0 && (
+          <div>
+            <ul>
+              {selectedTables.map((table, index) => (
+                <li key={index}>
+                  {table}
+                  <button
+                    onClick={() =>
+                      setSelectedTables(selectedTables.filter((t) => t !== table))
+                    }
+                    className="remove_button"
+                    aria-label={`Remover ${table}`}
+                  >
+                    &times;
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       <div className="section">
         <div className="section-title-with-tooltip">
@@ -125,7 +199,6 @@ function Filters() {
         </select>
       </div>
 
-
       <div className="section">
         <h3 className="section-title">Colunas para Exibir</h3>
         <div className="checkbox-group">
@@ -143,7 +216,7 @@ function Filters() {
         </div>
       </div>
 
-     <div className="section">
+      <div className="section">
         <h3 className="section-title">Funções de Agregação</h3>
         <div className="filter-column">
           <select className="filter-select">
@@ -156,9 +229,9 @@ function Filters() {
           </select>
           <select className="filter-select">
             <option>Selecione uma coluna</option>
-            <option>population</option>
-            <option>gdp</option>
-            <option>life_expectancy</option>
+            {columns.map(col => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -168,9 +241,9 @@ function Filters() {
         <div className="filter-column">
           <select className="filter-select" id='selector_tables'>
             <option>Selecione uma coluna</option>
-            <option>country_name</option>
-            <option>population</option>
-            <option>gdp</option>
+            {columns.map(col => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
           </select>
           <select className="filter-select" id="operators">
             <option>=</option>
@@ -188,9 +261,9 @@ function Filters() {
         <div className="filter-column">
           <select className="filter-select">
             <option>Selecione uma coluna</option>
-            <option>country_name</option>
-            <option>population</option>
-            <option>gdp</option>
+            {columns.map(col => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
           </select>
           <select className="filter-select">
             <option>ASC</option>
@@ -199,10 +272,9 @@ function Filters() {
         </div>
       </div>
 
-
-    <button className="generate-report-button">Gerar Relatório</button>
-  </div>
+      <button className="generate-report-button">Gerar Relatório</button>
+    </div>
   );
 }
 
-export default Filters
+export default Filters;
