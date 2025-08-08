@@ -35,10 +35,8 @@ app.get('/attributes/:tableName', async (req, res) => {
 
 app.get('/related-tables/:tableName', async (req, res) => {
   const { tableName } = req.params;
-  console.log(tableName)
 try {
     const related = await getRelatedTables(tableName);
-    console.log(`Tabelas relacionadas à ${tableName}:`, related);
     res.json(related);
   } catch (error) {
     console.error(`Erro ao buscar tabelas relacionadas à ${tableName}:`, error);
