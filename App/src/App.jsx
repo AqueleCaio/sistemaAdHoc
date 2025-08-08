@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Filters from './components/filter';
+import FilterMain from './components/filterMain';
 import SQLCode from './components/code';
 import Chart from './components/chart';
 import Table from './components/table';
@@ -23,7 +23,7 @@ function App() {
       <p className="app-subtitle">Gere relatórios personalizados com dados de pistas</p>
       
       <div className="app-content">
-        <Filters />
+        <FilterMain />
         <div className="app-right-panel">
           <SQLCode sqlQuery={sqlQuery} />
           <Chart />

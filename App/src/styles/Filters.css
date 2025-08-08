@@ -197,6 +197,22 @@ ul > li{
   transition: .4s;
 }
 
+.selected-tables-container {
+  display: flex;
+  gap: 6px;
+}
+
+.selected-table-badge {
+  background-color: #a0a0a0; /* cinza claro */
+  padding: 1px 1px 5px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  color: black;
+  font-size: 14px;
+  margin: auto;
+}
+
 .remove_button:hover {
   color: black;
 }
