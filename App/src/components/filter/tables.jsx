@@ -1,6 +1,11 @@
 import React from 'react';
 
-function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTables, availableTables, removeTable }) {
+function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTables, availableTables, removeTable, updateAvailableTables }) {
+  // garante que só tenha valores únicos
+  const uniqueTables = [...new Set(
+    availableTables.map(t => (typeof t === 'string' ? t : t.name))
+  )];
+
   return (
     <div className="section">
       <h3 className="section-title">Tabelas Disponíveis</h3>
@@ -9,12 +14,14 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
           className="filter-select"
           value={selectedTable || ''}
           onChange={(e) => setSelectedTable(e.target.value)}
-          disabled={availableTables.length === 0}
+          disabled={uniqueTables.length === 0}
         >
-          <option value="">{availableTables.length === 0 ? 'Nenhuma opção disponível' : 'Selecione uma tabela'}</option>
-          {availableTables.map((table) => (
-            <option key={table.name} value={table.name}>
-              {table.name}
+          <option value="">
+            {uniqueTables.length === 0 ? 'Nenhuma opção disponível' : 'Selecione uma tabela'}
+          </option>
+          {uniqueTables.map((tableName) => (
+            <option key={tableName} value={tableName}>
+              {tableName}
             </option>
           ))}
         </select>
@@ -36,7 +43,9 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
           className="add-button"
           onClick={() => {
             if (selectedTable && !selectedTables.includes(selectedTable)) {
-              setSelectedTables([...selectedTables, selectedTable]);
+              const newTables = [...selectedTables, selectedTable];
+              setSelectedTables(newTables);
+              updateAvailableTables(selectedTable, newTables); // só atualiza aqui
               setSelectedTable('');
             }
           }}

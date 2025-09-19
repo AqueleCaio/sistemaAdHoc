@@ -3,7 +3,7 @@ const cors = require('cors');
 const {
   getTableNames,
   getTableAttributes,
-  getRelatedTables
+  getAllRelatedTables
 } = require('./DAO/BDmain');
 
 const app = express();
@@ -33,16 +33,16 @@ app.get('/attributes/:tableName', async (req, res) => {
   }
 });
 
-app.get('/related-tables/:tableName', async (req, res) => {
-  const { tableName } = req.params;
-try {
-    const related = await getRelatedTables(tableName);
+app.get('/all-related-tables', async (req, res) => {
+  try {
+    const related = await getAllRelatedTables();
     res.json(related);
   } catch (error) {
-    console.error(`Erro ao buscar tabelas relacionadas à ${tableName}:`, error);
-    res.status(500).json({ error: 'Erro ao buscar tabelas relacionadas' });
+    console.error("Erro ao buscar todas as relações:", error);
+    res.status(500).json({ error: 'Erro ao buscar todas as relações' });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

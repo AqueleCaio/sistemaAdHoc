@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Filters.css';
 import question from '../assets/tooltip.png';
-import { getTableNames, getTableAttributes, getRelatedTables } from '../services/controller';
+import { getTableNames, getTableAttributes, getAllRelatedTables } from '../services/controller';
 
 // Importação dos subcomponentes
 import Tables from './filter/tables';
@@ -16,11 +16,13 @@ function FilterMain() {
   const [selectedTables, setSelectedTables] = useState([]);
   const [tables, setTables] = useState([]);
   const [relatedTables, setRelatedTables] = useState([]);
+  const [relations, setRelations] = useState({});
   const [availableTables, setAvailableTables] = useState([]);
   const [columns, setColumns] = useState([]);
   const [joinType, setJoinType] = useState('INNER JOIN');
   const [selectedColumns, setSelectedColumns] = useState([]);
 
+  // Carrega os nomes da tabela
   useEffect(() => {
     async function fetchTables() {
       const data = await getTableNames();
@@ -31,6 +33,16 @@ function FilterMain() {
     fetchTables();
   }, []);
 
+  // Carrega relações apenas uma vez
+  useEffect(() => {
+    const loadData = async () => {
+      const rels = await getAllRelatedTables();
+      setRelations(rels);
+    };
+    loadData();
+  }, []);
+
+  // Carrega atributos das tabelas selecionadas
   useEffect(() => {
     async function fetchColumns() {
       const allColumns = [];
@@ -53,6 +65,7 @@ function FilterMain() {
     }
   }, [selectedTables]);
 
+  // Função para remover tabela
   const removeTable = (tableToRemove) => {
     const newSelectedTables = selectedTables.filter(table => table !== tableToRemove);
     setSelectedTables(newSelectedTables);
@@ -61,19 +74,17 @@ function FilterMain() {
       setAvailableTables([...tables]);
       setRelatedTables([]);
       setSelectedTable('');
-      return;
     }
-    const lastSelected = newSelectedTables[newSelectedTables.length - 1];
-    updateAvailableTables(lastSelected, newSelectedTables);
   };
 
-  const updateAvailableTables = async (tableName, currentSelectedTables = selectedTables) => {
+  // Atualiza as tabelas dentro do dropdown
+  const updateAvailableTables = (tableName, currentSelectedTables = selectedTables) => {
     if (!tableName) {
       setAvailableTables([...tables].filter(t => !currentSelectedTables.includes(t.name)));
       return;
     }
-    const data = await getRelatedTables(tableName);
-    const related = data.map(t => t.foreign_table);
+
+    const related = relations[tableName] || [];
     setRelatedTables(related);
 
     setAvailableTables(
@@ -84,6 +95,7 @@ function FilterMain() {
     );
   };
 
+  // Toggle de colunas
   const toggleColumn = (columnId) => {
     if (selectedColumns.includes(columnId)) {
       setSelectedColumns(selectedColumns.filter(c => c !== columnId));
@@ -103,6 +115,7 @@ function FilterMain() {
         setSelectedTables={setSelectedTables}
         availableTables={availableTables}
         removeTable={removeTable}
+        updateAvailableTables={updateAvailableTables} // passa para o filho
       />
 
       <TypeJoin joinType={joinType} setJoinType={setJoinType} question={question} />

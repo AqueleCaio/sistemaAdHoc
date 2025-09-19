@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
  */
 async function getTableNames() {
   return await prisma.$queryRaw`
-    SELECT table_name 
+    SELECT table_name
     FROM information_schema.tables 
     WHERE table_schema = 'public'
   `;
@@ -24,13 +24,11 @@ async function getTableAttributes(tableName) {
   `;
 }
 
-/**
- * Retorna as tabelas relacionadas com a tabela informada
- */
-async function getRelatedTables(tableName) {
+async function getAllRelatedTables() {
   return await prisma.$queryRaw`
     SELECT DISTINCT
-      tc.table_name AS foreign_table
+      tc.table_name AS table_name,
+      ccu.table_name AS related_table
     FROM
       information_schema.table_constraints AS tc
     JOIN information_schema.key_column_usage AS kcu
@@ -41,13 +39,13 @@ async function getRelatedTables(tableName) {
       AND ccu.table_schema = tc.table_schema
     WHERE
       tc.constraint_type = 'FOREIGN KEY'
-      AND (ccu.table_name = ${tableName} OR tc.table_name = ${tableName})
       AND tc.table_schema = 'public'
   `;
 }
 
+
 module.exports = {
   getTableNames,
   getTableAttributes,
-  getRelatedTables,
+  getAllRelatedTables
 };
