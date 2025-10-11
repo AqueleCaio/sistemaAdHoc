@@ -3,6 +3,7 @@ const API_BASE_URL = 'http://localhost:5000';
 let cachedTableNames = null;
 let cachedRelations = null;
 
+// Função para buscar os nomes das tabelas do banco de dados
 export async function getTableNames() {
   if (cachedTableNames) return cachedTableNames;
 
@@ -16,6 +17,8 @@ export async function getTableNames() {
   }
 }
 
+
+// Função para buscar todas as relações entre tabelas
 export async function getAllRelatedTables() {
   if (cachedRelations) return cachedRelations;
 
@@ -43,7 +46,7 @@ export async function getAllRelatedTables() {
 }
 
 
-
+// Função para buscar os atributos (colunas) de uma tabela específica
 export async function getTableAttributes(tableName) {
   try {
     const res = await fetch(`${API_BASE_URL}/attributes/${tableName}`);
@@ -54,12 +57,23 @@ export async function getTableAttributes(tableName) {
   }
 }
 
-export async function getRelatedTables(tableName) {
+
+
+// Função para enviar os dados do relatório para o backend
+export async function postDataReport(payload) {
+  console.log('Chegou no controller:', payload);
   try {
-    const res = await fetch(`${API_BASE_URL}/related-tables/${tableName}`);
+    const res = await fetch(`${API_BASE_URL}/query-report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
     return await res.json();
   } catch (err) {
-    console.error('Erro ao buscar tabelas relacionadas:', err);
-    return [];
+    console.error('Erro ao enviar dados para relatório:', err);
+    return { error: 'Erro ao enviar dados para relatório' };
   }
 }
+

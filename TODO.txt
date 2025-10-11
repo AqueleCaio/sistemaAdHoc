@@ -1,0 +1,21 @@
+[ ] Fazer query de consulta geral para gerar o relatório.
+
+[ ] Mostrar consulta geral no viewer SQL
+
+[ X ] Deletar o _prisma_migrations das opções do dropbox
+
+------------------------
+
+[ ] Fazer um botão de adicão de filtros. Para adicionar mais filtros.
+
+[ ] Adicionar um filtro de Group By
+
+[ ] Fazer com que somente as colunas selecionas sejam exibidas nos dropbox's
+
+[ ] Fitros e OrderBy não estão funcionando.
+
+[ ] Arrumar exbição de colunas em relação as tabelas selecionadas
+
+--------------------------
+
+[ ] Filtrar as colunas que fazem sentido serem agregadas

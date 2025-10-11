@@ -3,7 +3,8 @@ const cors = require('cors');
 const {
   getTableNames,
   getTableAttributes,
-  getAllRelatedTables
+  getAllRelatedTables,
+  builderQuery
 } = require('./DAO/BDmain');
 
 const app = express();
@@ -42,6 +43,21 @@ app.get('/all-related-tables', async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar todas as relações' });
   }
 });
+
+app.post('/query-report', async (req, res) => {
+  const payload = req.body;
+
+  console.log('Chegou no endpoint /query-report:', payload);
+
+  try {
+    const result = await builderQuery(payload);
+    res.json(result);
+  } catch (error) {
+    console.error("Erro ao executar consulta dinâmica:", error);
+    res.status(500).json({ error: 'Erro ao executar consulta dinâmica' });
+  }
+});
+
 
 
 app.listen(PORT, () => {

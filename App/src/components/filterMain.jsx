@@ -1,9 +1,9 @@
+// FilterMain.jsx
 import React, { useState, useEffect } from 'react';
 import '../styles/Filters.css';
 import question from '../assets/tooltip.png';
-import { getTableNames, getTableAttributes, getAllRelatedTables } from '../services/controller';
+import { getTableNames, getTableAttributes, getAllRelatedTables, postDataReport } from '../services/controller';
 
-// Importação dos subcomponentes
 import Tables from './filter/tables';
 import TypeJoin from './filter/typeJoin';
 import Columns from './filter/columns';
@@ -21,6 +21,27 @@ function FilterMain() {
   const [columns, setColumns] = useState([]);
   const [joinType, setJoinType] = useState('INNER JOIN');
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [selectedAgg, setSelectedAgg] = useState({ func: null, column: null });
+  const [filters, setFilters] = useState([]);
+  const [orderBy, setOrderBy] = useState({ column: null, direction: 'ASC' });
+
+  const visibleColumns = columns.filter(col => selectedColumns.includes(col.id));
+
+  // Apenas para colunas numéricas que fazem sentido para agregação
+  const aggregatableColumns = columns.filter(col => {
+    const lower = col.name.toLowerCase();
+
+    // Campos que não fazem sentido em agregação
+    const invalid = /(nome|iso3|categoria|createdat|updatedat)/i.test(lower);
+
+    // Colunas que provavelmente são numéricas
+    const validNumeric = /(valor|ano|populacao|renda|indice|taxa|id)/i.test(lower);
+
+    return !invalid && validNumeric;
+  });
+
+
+
 
   // Carrega os nomes da tabela
   useEffect(() => {
@@ -65,7 +86,6 @@ function FilterMain() {
     }
   }, [selectedTables]);
 
-  // Função para remover tabela
   const removeTable = (tableToRemove) => {
     const newSelectedTables = selectedTables.filter(table => table !== tableToRemove);
     setSelectedTables(newSelectedTables);
@@ -77,7 +97,6 @@ function FilterMain() {
     }
   };
 
-  // Atualiza as tabelas dentro do dropdown
   const updateAvailableTables = (tableName, currentSelectedTables = selectedTables) => {
     if (!tableName) {
       setAvailableTables([...tables].filter(t => !currentSelectedTables.includes(t.name)));
@@ -95,7 +114,6 @@ function FilterMain() {
     );
   };
 
-  // Toggle de colunas
   const toggleColumn = (columnId) => {
     if (selectedColumns.includes(columnId)) {
       setSelectedColumns(selectedColumns.filter(c => c !== columnId));
@@ -103,6 +121,22 @@ function FilterMain() {
       setSelectedColumns([...selectedColumns, columnId]);
     }
   };
+
+  // Envia para o back
+  const handleGenerateReport = async () => {
+    console.log('Generating report with:', { selectedTables, joinType, selectedColumns, selectedAgg, filters, orderBy });
+    const payload = {
+      tables: selectedTables.map(name => ({ name })),
+      joinType,
+      columns: selectedColumns.map(col => ({ column: col })),
+      aggregation: selectedAgg.func ? { function: selectedAgg.func, column: selectedAgg.column } : null,
+      filters,
+      orderBy: orderBy.column ? { column: orderBy.column, direction: orderBy.direction } : null
+    };
+    const result = await postDataReport(payload);
+    console.log('Report result:', result);
+  };
+
 
   return (
     <div className="filters">
@@ -115,10 +149,14 @@ function FilterMain() {
         setSelectedTables={setSelectedTables}
         availableTables={availableTables}
         removeTable={removeTable}
-        updateAvailableTables={updateAvailableTables} // passa para o filho
+        updateAvailableTables={updateAvailableTables}
       />
 
-      <TypeJoin joinType={joinType} setJoinType={setJoinType} question={question} />
+      <TypeJoin 
+        joinType={joinType} 
+        setJoinType={setJoinType} 
+        question={question} 
+      />
 
       <Columns
         columns={columns}
@@ -126,13 +164,27 @@ function FilterMain() {
         toggleColumn={toggleColumn}
       />
 
-      <Agregation columns={columns} />
+      <Agregation 
+        columns={aggregatableColumns} 
+        selectedAgg={selectedAgg} 
+        setSelectedAgg={setSelectedAgg} 
+      />
 
-      <FiltersSection columns={columns} />
+      <FiltersSection 
+        columns={visibleColumns} 
+        setFilters={setFilters} 
+      />
 
-      <OrderBy columns={columns} />
+      <OrderBy 
+        columns={visibleColumns} 
+        orderBy={orderBy} 
+        setOrderBy={setOrderBy} 
+      />
 
-      <button className="generate-report-button">Gerar Relatório</button>
+
+      <button className="generate-report-button" onClick={handleGenerateReport}>
+        Gerar Relatório
+      </button>
     </div>
   );
 }

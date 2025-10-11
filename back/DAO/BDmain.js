@@ -10,6 +10,7 @@ async function getTableNames() {
     SELECT table_name
     FROM information_schema.tables 
     WHERE table_schema = 'public'
+    AND table_name NOT LIKE '%_prisma_%'
   `;
 }
 
@@ -43,9 +44,13 @@ async function getAllRelatedTables() {
   `;
 }
 
+async function builderQuery(payload) {
+  //...
+}
 
 module.exports = {
   getTableNames,
   getTableAttributes,
-  getAllRelatedTables
+  getAllRelatedTables,
+  builderQuery
 };
