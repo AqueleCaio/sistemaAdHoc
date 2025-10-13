@@ -1,57 +1,112 @@
 import React, { useState, useEffect } from 'react';
 
 function FiltersSection({ columns, setFilters }) {
-  // estados locais para os campos
-  const [selectedColumn, setSelectedColumn] = useState('');
-  const [operator, setOperator] = useState('=');
-  const [value, setValue] = useState('');
+  const [filtersList, setFiltersList] = useState([
+    { column: '', operator: '=', value: '', logic: 'AND' }
+  ]);
 
-  // sempre que algum campo mudar, atualizamos os filtros no pai
+  // Atualiza os filtros no pai sempre que houver mudança
   useEffect(() => {
-    if (selectedColumn && value !== '') {
-      setFilters([{ column: selectedColumn, operator, value }]);
-    } else {
-      setFilters([]); // se não tiver nada válido, limpa
-    }
-  }, [selectedColumn, operator, value, setFilters]);
+    // remove filtros incompletos antes de enviar
+    const validFilters = filtersList.filter(f => f.column && f.value !== '');
+    setFilters(validFilters);
+  }, [filtersList, setFilters]);
+
+  // Atualiza um filtro específico
+  const updateFilter = (index, key, value) => {
+    const updated = [...filtersList];
+    updated[index][key] = value;
+    setFiltersList(updated);
+  };
+
+  // Adiciona novo filtro
+  const addFilter = () => {
+    setFiltersList([
+      ...filtersList,
+      { column: '', operator: '=', value: '', logic: 'AND' }
+    ]);
+  };
+
+  // Remove filtro
+  const removeFilter = (index) => {
+    const updated = filtersList.filter((_, i) => i !== index);
+    setFiltersList(updated);
+  };
 
   return (
     <div className="section">
       <h3 className="section-title">Filtros</h3>
-      <div className="filter-column">
-        <select 
-          className="filter-select"
-          id='selector_tables'
-          value={selectedColumn}
-          onChange={e => setSelectedColumn(e.target.value)}
-        >
-          <option value="">Selecione uma coluna</option>
-          {columns.map(col => (
-            <option key={col.id} value={col.id}>{col.name}</option>
-          ))}
-        </select>
 
-        <select 
-          className="filter-select"
-          id="operators"
-          value={operator}
-          onChange={e => setOperator(e.target.value)}
-        >
-          <option value="=">=</option>
-          <option value="!=">!=</option>
-          <option value="<">&lt;</option>
-          <option value=">">&gt;</option>
-          <option value="LIKE">LIKE</option>
-        </select>
+      {filtersList.map((filter, index) => (
+        <div key={index} className="filter-column" style={{ marginBottom: '10px' }}>
+          {/* Operador lógico (exceto no primeiro filtro) */}
+          {index > 0 && (
+            <select
+              className="filter-select"
+              id='selector_tables'
+              value={filter.logic}
+              onChange={e => updateFilter(index, 'logic', e.target.value)}
+            >
+              <option value="AND">AND</option>
+              <option value="OR">OR</option>
+            </select>
+          )}
 
-        <input 
-          type="text" 
-          className="filter-input" 
-          placeholder="Valor" 
-          id='value'
-          onChange={e => setValue(e.target.value)}
-        />
-      </div>
+          {/* Coluna */}
+          <select
+            className="filter-select"
+            value={filter.column}
+            onChange={e => updateFilter(index, 'column', e.target.value)}
+          >
+            <option value="">Selecione uma coluna</option>
+            {columns.map(col => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+
+          {/* Operador */}
+          <select
+            className="filter-select"
+            id='operators'
+            value={filter.operator}
+            onChange={e => updateFilter(index, 'operator', e.target.value)}
+          >
+            <option value="=">=</option>
+            <option value="!=">!=</option>
+            <option value="<">&lt;</option>
+            <option value=">">&gt;</option>
+            <option value="LIKE">LIKE</option>
+          </select>
+
+          {/* Valor */}
+          <input
+            type="text"
+            className="filter-input"
+            id='value'
+            placeholder="Valor"
+            value={filter.value}
+            onChange={e => updateFilter(index, 'value', e.target.value)}
+          />
+
+          {/* Botão de remover */}
+          {filtersList.length > 1 && (
+            <button
+              className="filter-remove"
+              onClick={() => removeFilter(index)}
+            >
+              X
+            </button>
+          )}
+        </div>
+      ))}
+
+      {/* Botão de adicionar filtro */}
+      <button
+        className="filter-add"
+        onClick={addFilter}
+      >
+        Adicionar Filtro
+      </button>
     </div>
   );
 }
