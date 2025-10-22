@@ -7,6 +7,20 @@ const {
   builderQuery
 } = require('./DAO/BDmain');
 
+const {
+  isNumeric,
+  quoteValue,
+  normalizeColumns,
+  normalizeAggregation,
+  helperDataReport,
+} = require('./backController');
+
+BigInt.prototype.toJSON = function() {
+  return this.toString();
+};
+
+// const { default: Agregation } = require('../App/src/components/filter/agreggation');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -44,21 +58,81 @@ app.get('/all-related-tables', async (req, res) => {
   }
 });
 
+//
+// 1️⃣ ROTA PARA EXECUTAR A CONSULTA E RETORNAR APENAS O RESULTADO
+//
 app.post('/query-report', async (req, res) => {
-  const payload = req.body;
-
-  console.log('Chegou no endpoint /query-report:', payload);
-
   try {
-    const result = await builderQuery(payload);
-    res.json(result);
-  } catch (error) {
-    console.error("Erro ao executar consulta dinâmica:", error);
-    res.status(500).json({ error: 'Erro ao executar consulta dinâmica' });
+    const payload = req.body;
+
+    // 1) Monta as partes da query com o helper
+    const {
+      selectPart,
+      fromPart,
+      wherePart,
+      groupByPart,
+      orderByPart
+    } = helperDataReport(payload);
+
+    // 2) Executa a query completa com o builderQuery
+    const { result } = await builderQuery({
+      selectPart,
+      fromPart,
+      wherePart,
+      groupByPart,
+      orderByPart,
+    });
+
+    // 3) Retorna somente o resultado
+    res.json({ result });
+
+  } catch (err) {
+    console.error('❌ Erro ao processar /query-report:', err);
+    res.status(500).json({
+      error: 'Erro ao gerar relatório',
+      details: err.message,
+    });
   }
 });
 
 
+//
+// 2️⃣ ROTA PARA RETORNAR APENAS A QUERY GERADA (sem executar)
+//
+app.post('/query-to-view', async (req, res) => {
+  try {
+    const payload = req.body;
+
+    // 1) Usa o mesmo helper para montar a query
+    const {
+      selectPart,
+      fromPart,
+      wherePart,
+      groupByPart,
+      orderByPart
+    } = helperDataReport(payload);
+
+    // 2) Gera a query final (igual ao builderQuery, mas sem executar)
+    const fullQuery = `
+      SELECT ${selectPart}
+      FROM ${fromPart}
+      ${wherePart}
+      ${groupByPart}
+      ${orderByPart};
+    `.trim();
+
+    // 3) Retorna apenas a query formatada
+    res.json({ fullQuery });
+
+
+  } catch (err) {
+    console.error('❌ Erro ao montar query para visualização:', err);
+    res.status(500).json({
+      error: 'Erro ao montar query',
+      details: err.message,
+    });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

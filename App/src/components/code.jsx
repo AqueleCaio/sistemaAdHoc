@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/Code.css';
+import { useQuery } from '../context/queryContext';
 
-function Codigo({ sqlQuery }) {
+
+function SQLViewer() {
+  // estado para armazenar a query recebida do back-end
+  const { query } = useQuery();
+
   return (
     <div className="codigo-container">
       <h2 className="codigo-title">Consulta SQL Gerada</h2>
       <div className="sql-viewer">
-        <pre>{sqlQuery}</pre>
+         <pre>{query || 'Aguardando geração do relatório...'}</pre>
       </div>
     </div>
   );
 }
 
-export default Codigo;
+export default SQLViewer;

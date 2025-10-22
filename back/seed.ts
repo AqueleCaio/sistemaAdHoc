@@ -68,7 +68,7 @@ function getValidIso3code(code: string): string | null {
   return code && code.length === 3 ? code : null;
 }
 
-async function ensurePaisAndIndicador(item: any, indicadorNome: string, indicadorId: string) {
+async function ensurePaisAndIndicador(item: any, indicadorNome: string, indicador_: string) {
   // Criar ou atualizar país
   await prisma.pais.upsert({
     where: { id: item.country.id },
@@ -85,88 +85,80 @@ async function ensurePaisAndIndicador(item: any, indicadorNome: string, indicado
 
   // Criar ou atualizar indicador
   const categoria = Object.entries(indicadores).find(([_, inds]) => 
-    inds.some(i => i.id === indicadorId)
+    inds.some(i => i.id === indicador_)
   )?.[0]?.toUpperCase() as 'SAUDE' | 'ECONOMIA' | 'AMBIENTE' | 'TECNOLOGIA' | 'DEMOGRAFIA';
 
   await prisma.indicador.upsert({
-    where: { id: indicadorId },
+    where: { id: indicador_ },
     update: {
       nome: indicadorNome,
       categoria
     },
     create: {
-      id: indicadorId,
+      id: indicador_,
       nome: indicadorNome,
       categoria
     }
   });
 }
 
-async function insertData(categoria: string, data: any[], indicadorNome: string, indicadorId: string) {
-  for (const item of data) {
-    if (item.value === null || !item.country || !item.country.id || !item.date) {
-      continue;
+async function upsertByCompositeKey(model: any, record: any) {
+  const existing = await model.findFirst({
+    where: {
+      pais_id: record.pais_id,
+      indicador_id: record.indicador_id,
+      ano: record.ano
     }
+  });
+
+  if (existing) {
+    await model.update({
+      where: { id: existing.id },
+      data: { valor: record.valor }
+    });
+  } else {
+    await model.create({ data: record });
+  }
+}
+
+async function insertData(categoria: string, data: any[], indicadorNome: string, indicador_id: string) {
+  for (const item of data) {
+    // Ignorar registros incompletos
+    if (item.value === null || !item.country || !item.country.id || !item.date) continue;
 
     const isoCode = getValidIso3code(item.countryiso3code);
-    if (!isoCode) {
-      continue;
-    }
+    if (!isoCode) continue;
 
     try {
-      await ensurePaisAndIndicador(item, indicadorNome, indicadorId);
+      // Garante que o país e o indicador existam
+      await ensurePaisAndIndicador(item, indicadorNome, indicador_id);
 
       const record = {
         valor: item.value,
         ano: parseInt(item.date),
-        paisId: item.country.id,
-        indicadorId: indicadorId
+        pais_id: item.country.id,
+        indicador_id: indicador_id
       };
 
-      const where = {
-        paisId_indicadorId_ano: {
-          paisId: record.paisId,
-          indicadorId: record.indicadorId,
-          ano: record.ano
-        }
-      };
-
+      // Faz o insert/update conforme categoria
       switch (categoria) {
         case 'saude':
-          await prisma.saude.upsert({
-            where,
-            update: { valor: record.valor },
-            create: record
-          });
+          await upsertByCompositeKey(prisma.saude, record);
           break;
         case 'economia':
-          await prisma.economia.upsert({
-            where,
-            update: { valor: record.valor },
-            create: record
-          });
+          await upsertByCompositeKey(prisma.economia, record);
           break;
         case 'ambiente':
-          await prisma.ambiente.upsert({
-            where,
-            update: { valor: record.valor },
-            create: record
-          });
+          await upsertByCompositeKey(prisma.ambiente, record);
           break;
         case 'tecnologia':
-          await prisma.tecnologia.upsert({
-            where,
-            update: { valor: record.valor },
-            create: record
-          });
+          await upsertByCompositeKey(prisma.tecnologia, record);
           break;
         case 'demografia':
-          await prisma.demografia.upsert({
-            where,
-            update: { valor: record.valor },
-            create: record
-          });
+          await upsertByCompositeKey(prisma.demografia, record);
           break;
+        default:
+          console.warn(`Categoria desconhecida: ${categoria}`);
       }
     } catch (error) {
       console.error(`Erro ao inserir dados para ${item.country.id} - ${item.date}:`, error);

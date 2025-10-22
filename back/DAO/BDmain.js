@@ -1,5 +1,5 @@
 // DAO/BDmain.js
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient, Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 /**
@@ -44,9 +44,52 @@ async function getAllRelatedTables() {
   `;
 }
 
-async function builderQuery(payload) {
-  //...
+async function builderQuery({
+  selectPart,
+  fromPart,
+  wherePart = '',
+  groupByPart = '',
+  orderByPart = ''
+}) {
+  // assegura que os argumentos são strings (evita undefined na montagem)
+  selectPart = selectPart || '*';
+  fromPart = fromPart || '';
+  wherePart = wherePart || '';
+  groupByPart = groupByPart || '';
+  orderByPart = orderByPart || '';
+
+  // Monta na ordem correta: SELECT -> FROM (+ JOINs) -> WHERE -> GROUP BY -> ORDER BY
+  const fullQuery = `
+    SELECT ${selectPart}
+    FROM ${fromPart}
+    ${wherePart}
+    ${groupByPart}
+    ${orderByPart};
+      `.trim();
+
+  console.log('🧩 Query final montada no DAO:\n', fullQuery);
+
+  try {
+    const result = await prisma.$queryRawUnsafe(fullQuery);
+    return { result, fullQuery };
+  } catch (err) {
+    console.error('❌ Erro ao executar query no builderQuery:', err);
+    throw err;
+  }
 }
+
+
+/*
+Exemplo de uma consulta com SQL correta:
+
+SELECT COUNT(column_name), other_column
+FROM table_name
+WHERE condition
+JOIN TYPE another_table ON table_name.id = another_table.ref_id
+GROUP BY other_column
+ORDER BY COUNT(column_name) DESC
+
+*/
 
 module.exports = {
   getTableNames,

@@ -38,7 +38,7 @@ function FiltersSection({ columns, setFilters }) {
       <h3 className="section-title">Filtros</h3>
 
       {filtersList.map((filter, index) => (
-        <div key={index} className="filter-column" style={{ marginBottom: '10px' }}>
+        <div key={index} className="filter-column">
           {/* Operador lógico (exceto no primeiro filtro) */}
           {index > 0 && (
             <select

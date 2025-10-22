@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Filters.css';
 import question from '../assets/tooltip.png';
-import { getTableNames, getTableAttributes, getAllRelatedTables, postDataReport } from '../services/controller';
+import { getTableNames, 
+         getTableAttributes, 
+         getAllRelatedTables, 
+         handleReportGeneration } from '../services/frontController';
+import { useQuery } from '../context/queryContext';
+
 
 import Tables from './filter/tables';
 import TypeJoin from './filter/typeJoin';
@@ -21,7 +26,7 @@ function FilterMain() {
   const [columns, setColumns] = useState([]);
   const [joinType, setJoinType] = useState('INNER JOIN');
   const [selectedColumns, setSelectedColumns] = useState([]);
-  const [selectedAgg, setSelectedAgg] = useState({ func: null, column: null });
+  const [selectedAgg, setSelectedAgg] = useState([{ func: null, column: null }]);
   const [filters, setFilters] = useState([]);
   const [orderBy, setOrderBy] = useState({ column: null, direction: 'ASC' });
 
@@ -39,8 +44,6 @@ function FilterMain() {
 
     return !invalid && validNumeric;
   });
-
-
 
 
   // Carrega os nomes da tabela
@@ -86,17 +89,34 @@ function FilterMain() {
     }
   }, [selectedTables]);
 
-  const removeTable = (tableToRemove) => {
-    const newSelectedTables = selectedTables.filter(table => table !== tableToRemove);
-    setSelectedTables(newSelectedTables);
 
-    if (newSelectedTables.length === 0) {
-      setAvailableTables([...tables]);
-      setRelatedTables([]);
-      setSelectedTable('');
+  // Sempre que selectedTables mudar, atualiza as tabelas disponíveis
+  useEffect(() => {
+    if (selectedTables.length === 0) {
+      // Nenhuma tabela selecionada → mostrar todas as disponíveis
+      setAvailableTables(tables);
+    } else {
+      // Atualiza com base na última tabela selecionada
+      const lastTable = selectedTables[selectedTables.length - 1];
+      updateAvailableTables(lastTable, selectedTables);
     }
+  }, [selectedTables, tables]);
+
+
+  
+  const removeTable = (tableName) => {
+    const updatedTables = selectedTables.filter(t => t !== tableName);
+    setSelectedTables(updatedTables);
+
+    const updatedColumns = selectedColumns.filter(col => !col.startsWith(`${tableName}.`));
+    setSelectedColumns(updatedColumns);
+
+    // Atualiza as tabelas disponíveis após remover
+    updateAvailableTables(updatedTables[updatedTables.length - 1], updatedTables);
   };
 
+
+  // Atualiza as tabelas disponíveis com base na tabela selecionada
   const updateAvailableTables = (tableName, currentSelectedTables = selectedTables) => {
     if (!tableName) {
       setAvailableTables([...tables].filter(t => !currentSelectedTables.includes(t.name)));
@@ -114,6 +134,7 @@ function FilterMain() {
     );
   };
 
+  // Função para alternar a seleção de colunas
   const toggleColumn = (columnId) => {
     if (selectedColumns.includes(columnId)) {
       setSelectedColumns(selectedColumns.filter(c => c !== columnId));
@@ -122,20 +143,25 @@ function FilterMain() {
     }
   };
 
-  // Envia para o back
+
+  const { setQuery } = useQuery();
+
   const handleGenerateReport = async () => {
-    console.log('Generating report with:', { selectedTables, joinType, selectedColumns, selectedAgg, filters, orderBy });
     const payload = {
       tables: selectedTables.map(name => ({ name })),
       joinType,
       columns: selectedColumns.map(col => ({ column: col })),
-      aggregation: selectedAgg.func ? { function: selectedAgg.func, column: selectedAgg.column } : null,
+      aggregation: selectedAgg || [],
       filters,
       orderBy: orderBy.column ? { column: orderBy.column, direction: orderBy.direction } : null
     };
-    const result = await postDataReport(payload);
-    console.log('Report result:', result);
+
+    // Usa a função pai para distribuir o payload
+    const result = await handleReportGeneration(payload);
+
+    setQuery(result.query);    
   };
+  
 
 
   return (

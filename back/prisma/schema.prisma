@@ -8,35 +8,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Pais {
-  id         String     @id
-  nome       String
-  iso3       String     @unique
-  saude      Saude[]
-  economia   Economia[]
-  ambiente   Ambiente[]
-  tecnologia Tecnologia[]
-  demografia Demografia[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+model pais {
+  id          String       @id
+  nome        String
+  iso3        String       @unique
+  saude       saude[]
+  economia    economia[]
+  ambiente    ambiente[]
+  tecnologia  tecnologia[]
+  demografia  demografia[]
 
   @@map("pais")
 }
 
-model Indicador {
-  id         String     @id
-  nome       String
-  categoria  Categoria
-  saude      Saude[]
-  economia   Economia[]
-  ambiente   Ambiente[]
-  tecnologia Tecnologia[]
-  demografia Demografia[]
+model indicador {
+  id          String       @id
+  nome        String
+  categoria   categoria
+  saude       saude[]
+  economia    economia[]
+  ambiente    ambiente[]
+  tecnologia  tecnologia[]
+  demografia  demografia[]
 
   @@map("indicador")
 }
 
-enum Categoria {
+enum categoria {
   SAUDE
   ECONOMIA
   AMBIENTE
@@ -44,82 +42,77 @@ enum Categoria {
   DEMOGRAFIA
 }
 
-model Saude {
-  id          Int       @id @default(autoincrement())
-  valor       Float
-  ano         Int
-  pais        Pais      @relation(fields: [paisId], references: [id])
-  paisId      String
-  indicador   Indicador @relation(fields: [indicadorId], references: [id])
-  indicadorId String
-  createdAt   DateTime  @default(now())
+model saude {
+  id            Int         @id @default(autoincrement())
+  valor         Float
+  ano           Int
+  pais          pais        @relation(fields: [pais_id], references: [id])
+  pais_id       String
+  indicador     indicador   @relation(fields: [indicador_id], references: [id])
+  indicador_id  String
 
-  @@index([paisId])
-  @@index([indicadorId])
-  @@unique([paisId, indicadorId, ano])
+  @@index([pais_id])
+  @@index([indicador_id])
+  @@unique([pais_id, indicador_id, ano])
   @@map("saude")
 }
 
-model Economia {
-  id          Int       @id @default(autoincrement())
-  valor       Float
-  ano         Int
-  pais        Pais      @relation(fields: [paisId], references: [id])
-  paisId      String
-  indicador   Indicador @relation(fields: [indicadorId], references: [id])
-  indicadorId String
-  createdAt   DateTime  @default(now())
+model economia {
+  id            Int         @id @default(autoincrement())
+  valor         Float
+  ano           Int
+  pais          pais        @relation(fields: [pais_id], references: [id])
+  pais_id       String
+  indicador     indicador   @relation(fields: [indicador_id], references: [id])
+  indicador_id  String
 
-  @@index([paisId])
-  @@index([indicadorId])
-  @@unique([paisId, indicadorId, ano])
+  @@index([indicador_id])
+  @@index([pais_id])
   @@map("economia")
+  @@unique([pais_id, indicador_id, ano])
 }
 
-model Ambiente {
-  id          Int       @id @default(autoincrement())
-  valor       Float
-  ano         Int
-  pais        Pais      @relation(fields: [paisId], references: [id])
-  paisId      String
-  indicador   Indicador @relation(fields: [indicadorId], references: [id])
-  indicadorId String
-  createdAt   DateTime  @default(now())
+model ambiente {
+  id            Int         @id @default(autoincrement())
+  valor         Float
+  ano           Int
+  pais          pais        @relation(fields: [pais_id], references: [id])
+  pais_id       String
+  indicador     indicador   @relation(fields: [indicador_id], references: [id])
+  indicador_id  String
 
-  @@index([paisId])
-  @@index([indicadorId])
-  @@unique([paisId, indicadorId, ano])
+  @@index([pais_id])
+  @@index([indicador_id])
+  @@unique([pais_id, indicador_id, ano])
   @@map("ambiente")
 }
 
-model Tecnologia {
-  id          Int       @id @default(autoincrement())
-  valor       Float
-  ano         Int
-  pais        Pais      @relation(fields: [paisId], references: [id])
-  paisId      String
-  indicador   Indicador @relation(fields: [indicadorId], references: [id])
-  indicadorId String
-  createdAt   DateTime  @default(now())
+model tecnologia {
+  id            Int         @id @default(autoincrement())
+  valor         Float
+  ano           Int
+  pais          pais        @relation(fields: [pais_id], references: [id])
+  pais_id       String
+  indicador     indicador   @relation(fields: [indicador_id], references: [id])
+  indicador_id  String
 
-  @@index([paisId])
-  @@index([indicadorId])
-  @@unique([paisId, indicadorId, ano])
+  @@index([pais_id])
+  @@index([indicador_id])
+  @@unique([pais_id, indicador_id, ano])
   @@map("tecnologia")
 }
 
-model Demografia {
-  id          Int       @id @default(autoincrement())
-  valor       Float
-  ano         Int
-  pais        Pais      @relation(fields: [paisId], references: [id])
-  paisId      String
-  indicador   Indicador @relation(fields: [indicadorId], references: [id])
-  indicadorId String
-  createdAt   DateTime  @default(now())
+model demografia {
+  id            Int         @id @default(autoincrement())
+  valor         Float
+  ano           Int
+  pais          pais        @relation(fields: [pais_id], references: [id])
+  pais_id       String
+  indicador     indicador   @relation(fields: [indicador_id], references: [id])
+  indicador_id  String
 
-  @@index([paisId])
-  @@index([indicadorId])
-  @@unique([paisId, indicadorId, ano])
+  @@index([pais_id])
+  @@index([indicador_id])
+  @@unique([pais_id, indicador_id, ano])
   @@map("demografia")
 }

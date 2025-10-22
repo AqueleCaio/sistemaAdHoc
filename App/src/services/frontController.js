@@ -1,5 +1,6 @@
 const API_BASE_URL = 'http://localhost:5000';
 
+
 let cachedTableNames = null;
 let cachedRelations = null;
 
@@ -36,8 +37,6 @@ export async function getAllRelatedTables() {
       cachedRelations[rel.related_table].push(rel.table_name);
     });
 
-    console.log(cachedRelations)
-
     return cachedRelations;
   } catch (err) {
     console.error('Erro ao buscar relações:', err);
@@ -57,11 +56,32 @@ export async function getTableAttributes(tableName) {
   }
 }
 
+// Função pai para distribuir o payload
+export async function handleReportGeneration(payload) {
+  try {
+    // Executa ambas as funções em paralelo
+    const [reportResult, queryResult] = await Promise.all([
+      postDataReport(payload),
+      postQueryToView(payload)
+    ]);
 
+    // retorna ambos os resultados
+    return {
+      report: reportResult,
+      query: queryResult
+    };
+  } catch (err) {
+    console.error('Erro no processamento do relatório:', err);
+    return { 
+      error: 'Erro no processamento do relatório',
+      report: null,
+      query: null
+    };
+  }
+}
 
-// Função para enviar os dados do relatório para o backend
+// Suas funções originais (mantenha como estão)
 export async function postDataReport(payload) {
-  console.log('Chegou no controller:', payload);
   try {
     const res = await fetch(`${API_BASE_URL}/query-report`, {
       method: 'POST',
@@ -77,3 +97,20 @@ export async function postDataReport(payload) {
   }
 }
 
+// Função que envia os dados e recebe a query SQL
+export async function postQueryToView(payload) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/query-to-view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const { fullQuery } = await res.json();
+
+    return fullQuery;
+  } catch (err) {
+    console.error('Erro ao buscar consulta para visualização:', err);
+    return '';
+  }
+}
