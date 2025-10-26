@@ -24,10 +24,34 @@
 
 [ X ] Criar um botão para adicionar clausulas HAVING
 
-[ ] Validar inputs no front
 
 [ X ] Arrumar o container que aparece as tabelas selecionadas
 
 [ X ] Arrumar a condição para aparecer as tabelas relacionadas (caso tenha uma tabela no selected tables, deverá aparecer todas as tabelas que tenha relação com essa tabela, idependente se essa tabela não tiver sido a última a ser selecionada).
 
 [ X ] Fazer o Join para os outros tipos de Join
+
+------------------------
+
+[ X ] Fazer um combobox para que o usuário possa adicionar tabelas na clausula WHERE
+
+------------------------
+
+[ ] Validar inputs no front
+
+[ ? ] Fazer com o usuário consiga consultar por enum.
+
+[ X ] Fazer um icone de copiar no viewer para copiar a query instantaneamente.
+
+-----------------------
+
+
+[ X ] Fazer a tabela consumir dados retornadas da consulta do usuário
+
+[ ] Fazer o gráfico consumir dados do resultado da consulta do usuário(caso exista pelo menos um valor quantitativo e um qualitativo)
+
+[ ] Fazer uma tabela intarativa
+
+[ ] Mudar o nome e o favinco
+
+[ ] Colocar um carregando... no botão de gerar relatório e no viewer quando o usuário clicar no botão de gerar relatório.
