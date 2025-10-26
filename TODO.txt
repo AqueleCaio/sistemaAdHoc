@@ -50,7 +50,7 @@
 
 [ ] Fazer o gráfico consumir dados do resultado da consulta do usuário(caso exista pelo menos um valor quantitativo e um qualitativo)
 
-[ ] Fazer uma tabela intarativa
+[ ] Fazer uma tabela interativa
 
 [ ] Mudar o nome e o favinco
 
