@@ -49,6 +49,7 @@ async function builderQuery({
   fromPart,
   wherePart = '',
   groupByPart = '',
+  havingPart = '',
   orderByPart = ''
 }) {
   // assegura que os argumentos são strings (evita undefined na montagem)
@@ -56,21 +57,30 @@ async function builderQuery({
   fromPart = fromPart || '';
   wherePart = wherePart || '';
   groupByPart = groupByPart || '';
+  havingPart = havingPart || '';
   orderByPart = orderByPart || '';
 
   // Monta na ordem correta: SELECT -> FROM (+ JOINs) -> WHERE -> GROUP BY -> ORDER BY
-  const fullQuery = `
-    SELECT ${selectPart}
-    FROM ${fromPart}
-    ${wherePart}
-    ${groupByPart}
-    ${orderByPart};
-      `.trim();
+  const queryParts = [
+      `SELECT ${selectPart}`,
+      `FROM ${fromPart}`,
+      wherePart && `WHERE ${wherePart}`,
+      groupByPart && `GROUP BY ${groupByPart}`,
+      havingPart && `HAVING ${havingPart}`,
+      orderByPart && `ORDER BY ${orderByPart}`
+    ].filter(Boolean); // remove partes vazias
+
+    // Junta tudo com quebras de linha limpas
+    const fullQuery = queryParts.join('\n') + ';';
 
   console.log('🧩 Query final montada no DAO:\n', fullQuery);
 
+  console.log('\n----------------------------------\n')
   try {
     const result = await prisma.$queryRawUnsafe(fullQuery);
+
+    console.log('✅ Query executada com sucesso. Resultados (até 10 linhas):', result.slice(0, 10));
+
     return { result, fullQuery };
   } catch (err) {
     console.error('❌ Erro ao executar query no builderQuery:', err);
@@ -78,18 +88,6 @@ async function builderQuery({
   }
 }
 
-
-/*
-Exemplo de uma consulta com SQL correta:
-
-SELECT COUNT(column_name), other_column
-FROM table_name
-WHERE condition
-JOIN TYPE another_table ON table_name.id = another_table.ref_id
-GROUP BY other_column
-ORDER BY COUNT(column_name) DESC
-
-*/
 
 module.exports = {
   getTableNames,

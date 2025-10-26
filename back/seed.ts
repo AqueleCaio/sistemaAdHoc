@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
+
+import { PrismaClient, categoria as CategoriaEnum } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -83,22 +84,29 @@ async function ensurePaisAndIndicador(item: any, indicadorNome: string, indicado
     }
   });
 
-  // Criar ou atualizar indicador
-  const categoria = Object.entries(indicadores).find(([_, inds]) => 
+  const categoria = Object.entries(indicadores).find(([_, inds]) =>
     inds.some(i => i.id === indicador_)
-  )?.[0]?.toUpperCase() as 'SAUDE' | 'ECONOMIA' | 'AMBIENTE' | 'TECNOLOGIA' | 'DEMOGRAFIA';
+  )?.[0];
+
+  const categoriaFormatada = categoria
+    ? categoria.charAt(0).toUpperCase() + categoria.slice(1).toLowerCase()
+    : 'Economia'; // valor padrão (ajuste conforme quiser)
+
+  // converte para o enum do Prisma
+  const categoriaEnum = categoriaFormatada as CategoriaEnum;
+
 
   await prisma.indicador.upsert({
     where: { id: indicador_ },
     update: {
       nome: indicadorNome,
-      categoria
+      categoria: categoriaEnum,
     },
     create: {
       id: indicador_,
       nome: indicadorNome,
-      categoria
-    }
+      categoria: categoriaEnum,
+    },
   });
 }
 

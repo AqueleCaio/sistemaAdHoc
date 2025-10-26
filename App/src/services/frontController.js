@@ -70,6 +70,7 @@ export async function handleReportGeneration(payload) {
       report: reportResult,
       query: queryResult
     };
+
   } catch (err) {
     console.error('Erro no processamento do relatório:', err);
     return { 

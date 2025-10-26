@@ -20,7 +20,7 @@ function FilterMain() {
   const [selectedTable, setSelectedTable] = useState('');
   const [selectedTables, setSelectedTables] = useState([]);
   const [tables, setTables] = useState([]);
-  const [relatedTables, setRelatedTables] = useState([]);
+  const [having, setHaving] = useState([]);
   const [relations, setRelations] = useState({});
   const [availableTables, setAvailableTables] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -28,9 +28,7 @@ function FilterMain() {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [selectedAgg, setSelectedAgg] = useState([{ func: null, column: null }]);
   const [filters, setFilters] = useState([]);
-  const [orderBy, setOrderBy] = useState({ column: null, direction: 'ASC' });
-
-  const visibleColumns = columns.filter(col => selectedColumns.includes(col.id));
+  const [orderBy, setOrderBy] = useState([{ column: null, direction: 'ASC' }]);
 
   // Apenas para colunas numéricas que fazem sentido para agregação
   const aggregatableColumns = columns.filter(col => {
@@ -92,16 +90,8 @@ function FilterMain() {
 
   // Sempre que selectedTables mudar, atualiza as tabelas disponíveis
   useEffect(() => {
-    if (selectedTables.length === 0) {
-      // Nenhuma tabela selecionada → mostrar todas as disponíveis
-      setAvailableTables(tables);
-    } else {
-      // Atualiza com base na última tabela selecionada
-      const lastTable = selectedTables[selectedTables.length - 1];
-      updateAvailableTables(lastTable, selectedTables);
-    }
+    updateAvailableTables(null, selectedTables);
   }, [selectedTables, tables]);
-
 
   
   const removeTable = (tableName) => {
@@ -117,22 +107,30 @@ function FilterMain() {
 
 
   // Atualiza as tabelas disponíveis com base na tabela selecionada
-  const updateAvailableTables = (tableName, currentSelectedTables = selectedTables) => {
-    if (!tableName) {
-      setAvailableTables([...tables].filter(t => !currentSelectedTables.includes(t.name)));
-      return;
-    }
+    const updateAvailableTables = (tableName, currentSelectedTables = selectedTables) => {
+    if (!relations || !tables) return;
 
-    const related = relations[tableName] || [];
-    setRelatedTables(related);
+    // 🔹 Reúne todas as tabelas relacionadas às selecionadas
+    const allRelated = new Set();
 
-    setAvailableTables(
-      tables.filter(table =>
-        (related.includes(table.name) || currentSelectedTables.includes(table.name)) &&
-        !currentSelectedTables.includes(table.name)
-      )
+    currentSelectedTables.forEach(selTable => {
+      const related = relations[selTable] || [];
+      related.forEach(r => allRelated.add(r));
+    });
+
+    // 🔹 Remove as que já estão selecionadas
+    const available = tables.filter(t => 
+      allRelated.has(t.name) && !currentSelectedTables.includes(t.name)
     );
+
+    // Se nenhuma selecionada, mostra todas
+    if (currentSelectedTables.length === 0) {
+      setAvailableTables(tables);
+    } else {
+      setAvailableTables(available);
+    }
   };
+
 
   // Função para alternar a seleção de colunas
   const toggleColumn = (columnId) => {
@@ -143,8 +141,24 @@ function FilterMain() {
     }
   };
 
+    const orderableOptions = [
+      // 🔹 colunas realmente selecionadas no SELECT
+      ...(selectedColumns || []).map(col => ({
+        id: typeof col === 'string' ? col : col.column || col.id,
+        label: typeof col === 'string' ? col : col.name || col.column || col.id
+      })),
 
-  const { setQuery } = useQuery();
+      // 🔹 funções de agregação
+      ...(selectedAgg || [])
+        .filter(a => a.func && a.column)
+        .map(a => ({
+          id: `${a.func}(${a.column})`,
+          label: `${a.func}(${a.column})`
+        }))
+    ];
+
+
+  const { setQuery, setResult } = useQuery();
 
   const handleGenerateReport = async () => {
     const payload = {
@@ -152,16 +166,23 @@ function FilterMain() {
       joinType,
       columns: selectedColumns.map(col => ({ column: col })),
       aggregation: selectedAgg || [],
+      having: having || [],
       filters,
-      orderBy: orderBy.column ? { column: orderBy.column, direction: orderBy.direction } : null
+      orderBy: orderBy
+        .filter(ob => ob.column) // remove itens sem coluna selecionada
+        .map(ob => ({ column: ob.column, direction: ob.direction || 'ASC' }))
     };
 
-    // Usa a função pai para distribuir o payload
     const result = await handleReportGeneration(payload);
 
-    setQuery(result.query);    
+    setQuery(result.query);
+    setResult({
+      rows: result.report?.result || [],
+      columns: result.report?.result?.length
+        ? Object.keys(result.report.result[0]).map(key => ({ dataKey: key, label: key, width: 120 }))
+        : []
+    });
   };
-  
 
 
   return (
@@ -193,16 +214,18 @@ function FilterMain() {
       <Agregation 
         columns={aggregatableColumns} 
         selectedAgg={selectedAgg} 
-        setSelectedAgg={setSelectedAgg} 
+        setSelectedAgg={setSelectedAgg}
+        setSelectedHaving={setHaving} 
       />
 
+
       <FiltersSection 
-        columns={visibleColumns} 
+        columns={columns} 
         setFilters={setFilters} 
       />
 
       <OrderBy 
-        columns={visibleColumns} 
+        columns={orderableOptions} 
         orderBy={orderBy} 
         setOrderBy={setOrderBy} 
       />

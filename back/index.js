@@ -71,6 +71,7 @@ app.post('/query-report', async (req, res) => {
       fromPart,
       wherePart,
       groupByPart,
+      havingPart,
       orderByPart
     } = helperDataReport(payload);
 
@@ -80,6 +81,7 @@ app.post('/query-report', async (req, res) => {
       fromPart,
       wherePart,
       groupByPart,
+      havingPart,
       orderByPart,
     });
 
@@ -103,23 +105,31 @@ app.post('/query-to-view', async (req, res) => {
   try {
     const payload = req.body;
 
+
+    console.log('Como o payload chegou: ', payload)
+
     // 1) Usa o mesmo helper para montar a query
     const {
       selectPart,
       fromPart,
       wherePart,
       groupByPart,
+      havingPart,
       orderByPart
     } = helperDataReport(payload);
 
     // 2) Gera a query final (igual ao builderQuery, mas sem executar)
-    const fullQuery = `
-      SELECT ${selectPart}
-      FROM ${fromPart}
-      ${wherePart}
-      ${groupByPart}
-      ${orderByPart};
-    `.trim();
+    const queryParts = [
+      `SELECT ${selectPart}`,
+      `FROM ${fromPart}`,
+      wherePart && `WHERE ${wherePart}`,
+      groupByPart && `GROUP BY ${groupByPart}`,
+      havingPart && `HAVING ${havingPart}`,
+      orderByPart && `ORDER BY ${orderByPart}`
+    ].filter(Boolean); // remove partes vazias
+
+    // 🔹 Junta tudo com quebras de linha limpas
+    const fullQuery = queryParts.join('\n') + ';';
 
     // 3) Retorna apenas a query formatada
     res.json({ fullQuery });

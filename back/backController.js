@@ -32,11 +32,12 @@ function helperDataReport(payload) {
     if (!Array.isArray(tables) || tables.length === 0) {
       return res.status(400).json({ error: 'É necessário informar ao menos uma tabela em payload.tables' });
     }
-    const joinTypeDefault = payload.joinType || 'INNER JOIN';
+    const joinType = payload.joinType || 'INNER JOIN';
     const columnsArr = normalizeColumns(payload.columns); // array de strings
     const aggregationArr = normalizeAggregation(payload.aggregation);
     const filters = Array.isArray(payload.filters) ? payload.filters : [];
     const orderBy = payload.orderBy || null;
+    const having = payload.having || null; // 👈 nova cláusula HAVING
     // groupBy pode vir como array, string ou como propriedade aggregation.groupBy já definida
     let groupBy = payload.groupBy || null;
     if (!groupBy && Array.isArray(aggregationArr) && aggregationArr.length > 0) {
@@ -47,46 +48,81 @@ function helperDataReport(payload) {
     // ----------------------------
     // 2) Montar SELECT (colunas + agregações)
     // ----------------------------
-    // agregações com alias seguro (substitui '.' por '_')
+
+    // 🔹 Agregações com alias seguro (ex: AVG(saude.valor) AS AVG_saude_valor)
     const aggsPartArr = aggregationArr.map(a => {
       const alias = `${a.func}_${String(a.column).replace(/\./g, '_')}`;
       return `${a.func}(${a.column}) AS ${alias}`;
     });
 
-    // select final: agregações primeiro (se existirem) + colunas normais
+    // 🔹 Colunas normais com alias seguro (ex: pais.nome AS pais_nome)
+    const columnsPartArr = columnsArr.map(c => {
+      if (c.includes('.')) {
+        const alias = String(c).replace(/\./g, '_');
+        return `${c} AS ${alias}`;
+      }
+      return c; // coluna simples sem tabela
+    });
+
+    // 🔹 Select final
     const selectItems = [];
     if (aggsPartArr.length > 0) selectItems.push(...aggsPartArr);
-    if (columnsArr.length > 0) selectItems.push(...columnsArr);
-    const selectPart = selectItems.length > 0 ? selectItems.join(', ') : '*';
+    if (columnsPartArr.length > 0) selectItems.push(...columnsPartArr);
+
+    const selectPart = selectItems.length > 0 ? selectItems.join(', \n\t') : '*';
+
+
+
+    // 🔧 Mapa de relações diretas do schema
+    const RELATIONS = {
+      saude:      { pais: 'pais_id', indicador: 'indicador_id' },
+      economia:   { pais: 'pais_id', indicador: 'indicador_id' },
+      ambiente:   { pais: 'pais_id', indicador: 'indicador_id' },
+      tecnologia: { pais: 'pais_id', indicador: 'indicador_id' },
+      demografia: { pais: 'pais_id', indicador: 'indicador_id' },
+    };
 
     // ----------------------------
-    // 3) Montar FROM e JOINs (OBRIGATÓRIO ON para joins "significativos")
+    // 3) Montar FROM e JOINs seguros
     // ----------------------------
-    // primeira tabela
     const firstTable = typeof tables[0] === 'string' ? tables[0] : tables[0].name;
     let fromPart = firstTable;
 
-    // se houver mais tabelas, cada uma deve ter .type (opcional) e preferencialmente .on (left/right)
     if (tables.length > 1) {
       for (let i = 1; i < tables.length; i++) {
         const t = tables[i];
         const name = typeof t === 'string' ? t : t.name;
-        const type = (t && t.type) ? t.type : joinTypeDefault;
 
-        // se tiver cláusula ON corretamente, usa JOIN ... ON left = right
-        if (t && t.on && t.on.left && t.on.right) {
-          fromPart += ` ${type} ${name} ON ${t.on.left} = ${t.on.right}`;
+        let joinClause = '';
+        const type = (t && t.type) ? t.type.toUpperCase() : joinType || 'INNER JOIN';
+
+        // 1️⃣ Se o front definir manualmente a condição
+        if (t?.on?.left && t?.on?.right) {
+          joinClause = `${type} ${name} ON ${t.on.left} = ${t.on.right}`;
         } else {
-          // se não tiver on, faz CROSS JOIN (ou vírgula para compatibilidade com INNER JOIN)
-          // prefira explicitar ON no front para evitar resultados cartesianos
-          if (type.toUpperCase().includes('INNER')) {
-            fromPart += `, ${name}`; // equivalente a CROSS JOIN/implicit join
+          // 2️⃣ Tenta achar uma relação válida com QUALQUER tabela já incluída
+          const relatedTable = tables
+            .slice(0, i)
+            .map(tt => (typeof tt === 'string' ? tt : tt.name))
+            .find(prev => RELATIONS[name]?.[prev] || RELATIONS[prev]?.[name]);
+
+          if (relatedTable && RELATIONS[name]?.[relatedTable]) {
+            const fk = `${name}.${RELATIONS[name][relatedTable]}`;
+            joinClause = `${type} ${name} ON ${fk} = ${relatedTable}.id`;
+          } else if (relatedTable && RELATIONS[relatedTable]?.[name]) {
+            const fk = `${relatedTable}.${RELATIONS[relatedTable][name]}`;
+            joinClause = `${type} ${name} ON ${fk} = ${name}.id`;
           } else {
-            fromPart += ` ${type} ${name}`; // e.g. "LEFT JOIN demografia" sem ON (não recomendado)
+            console.warn(`⚠️ Nenhuma relação encontrada para ${name}, JOIN ignorado.`);
+            continue;
           }
         }
+        fromPart += `\n${joinClause}`;
+
       }
     }
+
+    const tableNames = ['pais', 'saude', 'tecnologia', 'ambiente', 'demografia', 'indicador'];
 
     // ----------------------------
     // 4) Montar WHERE (valores já escapados aqui)
@@ -94,48 +130,83 @@ function helperDataReport(payload) {
     let wherePart = '';
     if (Array.isArray(filters) && filters.length > 0) {
       const conds = filters.map(f => {
-
         // permite operador 'IN' com array
         if (Array.isArray(f.value)) {
           const vals = f.value.map(v => quoteValue(v)).join(', ');
-
           return `${f.column} ${f.operator} (${vals})`;
         }
 
-        // operadores especiais como LIKE: transforma valor
-        // caso contrário a string fica com a primeira letra maiúscula
         let valToUse = f.value;
-        
-        if (typeof f.value === 'string' && f.operator && f.operator.toUpperCase() === 'LIKE') {
-          valToUse = `%${f.value}%`;
 
-        } else if (f.operator === '=') {
+        // 🔍 Verifica se o valor é uma referência a tabela.coluna
+        const isTableRef =
+          typeof f.value === 'string' &&
+          f.value.includes('.') &&
+          tableNames.some(tbl => f.value.toLowerCase().startsWith(tbl.toLowerCase() + '.'));
+
+        // operadores especiais como LIKE
+        if (typeof f.value === 'string' && f.operator?.toUpperCase() === 'LIKE') {
+          valToUse = `%${f.value}%`;
+        } 
+        else if (f.operator === '=' && !isTableRef) {
+          // capitaliza valores comuns (mas não referências a tabelas)
           valToUse = f.value.charAt(0).toUpperCase() + f.value.slice(1);
         }
 
+        // 🔧 Se for uma tabela.coluna, deixa sem aspas e lowercase
+        if (isTableRef) {
+          return `${f.column} ${f.operator} ${f.value.toLowerCase()}`;
+        }
+
+        // caso comum: escapa valor com aspas
         return `${f.column} ${f.operator} ${quoteValue(valToUse)}`;
       });
-      wherePart = `WHERE ${conds.join(' AND ')}`;
+
+      wherePart = conds.join(' AND ');
     }
+
 
     // ----------------------------
     // 5) Montar GROUP BY (já em forma de string)
     // ----------------------------
     let groupByPart = '';
     if (Array.isArray(groupBy) && groupBy.length > 0) {
-      groupByPart = `GROUP BY ${groupBy.join(', ')}`;
+      groupByPart = `${groupBy.join(', ')}`;
     } else if (groupBy && typeof groupBy === 'string') {
-      groupByPart = `GROUP BY ${groupBy}`;
+      groupByPart = `${groupBy}`;
     }
 
+
+    // Monta o HAVING
+    let havingPart = '';
+    if (having) {
+      if (Array.isArray(having)) {
+        // Exemplo: [{ column: 'AVG(saude.valor)', operator: '>', value: 100 }]
+        havingPart = having
+          .map(h => `${h.aggregation} ${h.operator} ${h.value}`)
+          .join(' AND ');
+      } else if (typeof having === 'string') {
+        havingPart = having; // já veio pronto do front
+      }
+    }
+
+
     // ----------------------------
-    // 6) Montar ORDER BY
+    // 6) Montar ORDER BY (suporte a múltiplas cláusulas)
     // ----------------------------
     let orderByPart = '';
-    if (orderBy && orderBy.column) {
-      const dir = orderBy.direction ? orderBy.direction.toUpperCase() : 'ASC';
-      orderByPart = `ORDER BY ${orderBy.column} ${dir}`;
-    } 
+    if (orderBy && Array.isArray(orderBy) && orderBy.length > 0) {
+      // transforma cada cláusula em "coluna DIREÇÃO"
+      const clauses = orderBy.map(ob => {
+        const col = ob.column;
+        const dir = ob.direction ? ob.direction.toUpperCase() : 'ASC';
+        return `${col} ${dir}`;
+      });
+
+      // junta tudo separado por vírgula
+      orderByPart = clauses.join(', ');
+    }
+
 
     // ----------------------------
     // 7) Retornar as partes para a rota
@@ -145,6 +216,7 @@ function helperDataReport(payload) {
       fromPart,
       wherePart,
       groupByPart,
+      havingPart,
       orderByPart
     };
 

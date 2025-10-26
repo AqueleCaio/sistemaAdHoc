@@ -9,7 +9,7 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
   return (
     <div className="section">
       <h3 className="section-title">Tabelas Disponíveis</h3>
-      <div className="filter-column">
+      <div className="dropbox_tables">
         <select
           className="filter-select"
           value={selectedTable || ''}

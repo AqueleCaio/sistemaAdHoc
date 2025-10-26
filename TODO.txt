@@ -1,21 +1,33 @@
-[ ] Fazer query de consulta geral para gerar o relatório.
+[ x ] Fazer query de consulta geral para gerar o relatório.
 
-[ ] Mostrar consulta geral no viewer SQL
+[ x ] Mostrar consulta geral no viewer SQL
 
 [ X ] Deletar o _prisma_migrations das opções do dropbox
 
 ------------------------
 
-[ ] Fazer um botão de adicão de filtros. Para adicionar mais filtros.
+[ x ] Fazer um botão de adicão de filtros. Para adicionar mais filtros.
 
-[ ] Adicionar um filtro de Group By
+[ x ] Adicionar um filtro de Group By
 
-[ ] Fazer com que somente as colunas selecionas sejam exibidas nos dropbox's
+[ x ] Fazer com que somente as colunas selecionas sejam exibidas nos dropbox's
 
-[ ] Fitros e OrderBy não estão funcionando.
+[ x ] Fitros e OrderBy não estão funcionando.
 
-[ ] Arrumar exbição de colunas em relação as tabelas selecionadas
+[ x ] Arrumar exbição de colunas em relação as tabelas selecionadas
 
 --------------------------
 
-[ ] Filtrar as colunas que fazem sentido serem agregadas
+[ x ] Filtrar as colunas que fazem sentido serem agregadas
+
+--------------------------
+
+[ X ] Criar um botão para adicionar clausulas HAVING
+
+[ ] Validar inputs no front
+
+[ X ] Arrumar o container que aparece as tabelas selecionadas
+
+[ X ] Arrumar a condição para aparecer as tabelas relacionadas (caso tenha uma tabela no selected tables, deverá aparecer todas as tabelas que tenha relação com essa tabela, idependente se essa tabela não tiver sido a última a ser selecionada).
+
+[ X ] Fazer o Join para os outros tipos de Join

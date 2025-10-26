@@ -35,11 +35,11 @@ model indicador {
 }
 
 enum categoria {
-  SAUDE
-  ECONOMIA
-  AMBIENTE
-  TECNOLOGIA
-  DEMOGRAFIA
+  Saude
+  Economia
+  Ambiente
+  Tecnologia
+  Demografia
 }
 
 model saude {
