@@ -66,7 +66,7 @@ function Agregation({ columns, selectedAgg, setSelectedAgg, setSelectedHaving })
             value={agg.func}
             onChange={e => updateAggregation(index, 'func', e.target.value)}
           >
-            <option value="">Selecione uma função</option>
+            <option value="">Funções</option>
             <option value="COUNT">COUNT</option>
             <option value="SUM">SUM</option>
             <option value="AVG">AVG</option>
@@ -80,7 +80,7 @@ function Agregation({ columns, selectedAgg, setSelectedAgg, setSelectedHaving })
             value={agg.column}
             onChange={e => updateAggregation(index, 'column', e.target.value)}
           >
-            <option value="">Selecione uma coluna</option>
+            <option value="">Colunas</option>
             {columns.map(col => (
               <option key={col.id} value={col.id}>{col.name}</option>
             ))}
@@ -124,7 +124,7 @@ function Agregation({ columns, selectedAgg, setSelectedAgg, setSelectedHaving })
                 value={having.aggregation}
                 onChange={e => updateHaving(index, 'aggregation', e.target.value)}
               >
-                <option value="">Selecione uma agregação</option>
+                <option value="">Agregações</option>
                 {availableAggregations.map((agg, i) => (
                   <option key={i} value={agg}>{agg}</option>
                 ))}

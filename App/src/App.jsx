@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import FilterMain from './components/filterMain';
 import SQLCode from './components/code';
-import Chart from './components/chart';
+import ChartComponent from './components/chart';
 import Table from './components/table';
+
 import './App.css';
 import { QueryProvider } from './context/queryContext';
 
@@ -17,7 +18,7 @@ function App() {
           <FilterMain />
           <div className="app-right-panel">
             <SQLCode/>
-            <Chart />
+            <ChartComponent />
             <Table/>
           </div>
         </div>

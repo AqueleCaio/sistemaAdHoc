@@ -122,7 +122,7 @@ function helperDataReport(payload) {
       }
     }
 
-    const tableNames = ['pais', 'saude', 'tecnologia', 'ambiente', 'demografia', 'indicador'];
+    const tableNames = ['pais', 'saude', 'tecnologia', 'ambiente', 'demografia', 'indicador', 'economia'];
 
     // ----------------------------
     // 4) Montar WHERE (valores já escapados aqui)
@@ -139,10 +139,17 @@ function helperDataReport(payload) {
         let valToUse = f.value;
 
         // 🔍 Verifica se o valor é uma referência a tabela.coluna
+        const lowerTables = tableNames.map(t => t.toLowerCase());
+        const lowerValue = typeof f.value === 'string' ? f.value.toLowerCase() : '';
+
         const isTableRef =
           typeof f.value === 'string' &&
-          f.value.includes('.') &&
-          tableNames.some(tbl => f.value.toLowerCase().startsWith(tbl.toLowerCase() + '.'));
+          /^[a-z_]+\.[a-z_]+$/i.test(f.value) && // formato tabela.coluna
+          (
+            lowerTables.some(tbl => lowerValue.startsWith(tbl + '.'))
+            || true // ✅ assume que é uma referência válida mesmo que tabela não esteja na lista
+          );
+
 
         // operadores especiais como LIKE
         if (typeof f.value === 'string' && f.operator?.toUpperCase() === 'LIKE') {
@@ -155,8 +162,9 @@ function helperDataReport(payload) {
 
         // 🔧 Se for uma tabela.coluna, deixa sem aspas e lowercase
         if (isTableRef) {
-          return `${f.column} ${f.operator} ${f.value.toLowerCase()}`;
+          return `${f.column} ${f.operator} ${lowerValue}`;
         }
+
 
         // caso comum: escapa valor com aspas
         return `${f.column} ${f.operator} ${quoteValue(valToUse)}`;

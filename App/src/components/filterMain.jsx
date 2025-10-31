@@ -218,7 +218,6 @@ function FilterMain() {
         setSelectedHaving={setHaving} 
       />
 
-
       <FiltersSection 
         columns={columns} 
         setFilters={setFilters} 
@@ -230,8 +229,8 @@ function FilterMain() {
         setOrderBy={setOrderBy} 
       />
 
-
       <button className="generate-report-button" onClick={handleGenerateReport}>
+        <span>📊</span>
         Gerar Relatório
       </button>
     </div>

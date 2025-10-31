@@ -1,35 +1,230 @@
-.codigo-container {
-  background-color: #ffffff;
-  padding: 16px;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  width: 95%;
+/* Container principal */
+.code-container {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  animation: slideUp 0.3s ease;
+  margin-bottom: 24px;
 }
 
-.codigo-title {
-  color: #333333;
-  font-size: 16px;
+.code-title {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eeeeee;
+  color: var(--text-dark);
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-light);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* Viewer SQL */
 .sql-viewer {
-  background-color: #f5f5f5;
-  padding: 12px;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #333333;
-  white-space: pre-wrap;
+  position: relative;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  background: var(--background-lighter);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.sql-viewer:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+/* Botão de copiar */
+.copy-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: white;
+  margin: 10px;
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.copy-button:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.copy-button.copied {
+  background: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.copy-icon {
+  font-size: 0.9rem;
+}
+
+.copy-text {
+  font-weight: 500;
+}
+
+/* Conteúdo SQL */
+.sql-content {
+  padding: 50px 20px 20px 20px;
+  background: #1a1b26;
+  border-radius: var(--border-radius);
+  margin: 8px;
   overflow-x: auto;
 }
 
-.sql-viewer pre {
+.sql-code {
   margin: 0;
+  color: #c0caf5;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Syntax highlighting básico */
+.sql-code code {
+  display: block;
+}
+
+.sql-code code::before {
+  content: '';
+}
+
+/* Cores para syntax SQL */
+.sql-code .keyword {
+  color: #bb9af7;
+  font-weight: bold;
+}
+
+.sql-code .function {
+  color: #7dcfff;
+}
+
+.sql-code .string {
+  color: #9ece6a;
+}
+
+.sql-code .number {
+  color: #ff9e64;
+}
+
+.sql-code .comment {
+  color: #565f89;
+  font-style: italic;
+}
+
+.sql-code .table {
+  color: #e0af68;
+}
+
+.sql-code .column {
+  color: #7aa2f7;
+}
+
+/* Estados vazios */
+.sql-code:empty::before {
+  content: '-- Aguardando geração do relatório...\A-- Configure os filtros acima e clique em "Gerar Relatório"';
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* Scrollbar personalizada */
+.sql-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sql-content::-webkit-scrollbar-track {
+  background: #16161e;
+  border-radius: 4px;
+}
+
+.sql-content::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+.sql-content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .code-container {
+    padding: 16px;
+    margin: 8px;
+  }
+
+  .code-title {
+    font-size: 1.3rem;
+  }
+
+  .sql-content {
+    padding: 45px 16px 16px 16px;
+  }
+
+  .sql-code {
+    font-size: 0.8rem;
+  }
+
+  .copy-button {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .copy-text {
+    display: none;
+  }
+
+  .copy-button:hover .copy-text {
+    display: inline;
+  }
+}
+
+@media (max-width: 480px) {
+  .sql-content {
+    padding: 40px 12px 12px 12px;
+  }
+
+  .sql-code {
+    font-size: 0.75rem;
+  }
+}
+
+/* Animações */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+  }
+}
+
+.copy-button.copied {
+  animation: pulse 0.6s ease;
 }

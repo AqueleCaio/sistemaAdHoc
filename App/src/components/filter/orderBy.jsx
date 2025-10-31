@@ -37,10 +37,13 @@ function OrderBy({ columns, orderBy, setOrderBy }) {
           value={ob.column || ''}
           onChange={e => handleColumnChange(index, e.target.value)}
         >
-          <option value="">Selecione uma coluna</option>
-          {columns.map(opt => (
-            <option key={opt.column} value={opt.column}>{opt.label}</option>
+          <option value="">Colunas</option>
+          {columns.map((opt, i) => (
+            <option key={opt.id || opt.column || i} value={opt.id || opt.column}>
+              {opt.label}
+            </option>
           ))}
+
         </select>
 
 

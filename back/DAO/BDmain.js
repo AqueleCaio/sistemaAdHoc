@@ -52,7 +52,7 @@ async function builderQuery({
   havingPart = '',
   orderByPart = ''
 }) {
-  // assegura que os argumentos são strings (evita undefined na montagem)
+  // Assegura que os argumentos são strings (evita undefined)
   selectPart = selectPart || '*';
   fromPart = fromPart || '';
   wherePart = wherePart || '';
@@ -60,22 +60,29 @@ async function builderQuery({
   havingPart = havingPart || '';
   orderByPart = orderByPart || '';
 
-  // Monta na ordem correta: SELECT -> FROM (+ JOINs) -> WHERE -> GROUP BY -> ORDER BY
+  // Monta a query base
   const queryParts = [
-      `SELECT ${selectPart}`,
-      `FROM ${fromPart}`,
-      wherePart && `WHERE ${wherePart}`,
-      groupByPart && `GROUP BY ${groupByPart}`,
-      havingPart && `HAVING ${havingPart}`,
-      orderByPart && `ORDER BY ${orderByPart}`
-    ].filter(Boolean); // remove partes vazias
+    `SELECT ${selectPart}`,
+    `FROM ${fromPart}`,
+    wherePart && `WHERE ${wherePart}`,
+    groupByPart && `GROUP BY ${groupByPart}`,
+    havingPart && `HAVING ${havingPart}`,
+    orderByPart && `ORDER BY ${orderByPart}`
+  ].filter(Boolean);
 
-    // Junta tudo com quebras de linha limpas
-    const fullQuery = queryParts.join('\n') + ';';
+  let fullQuery = queryParts.join('\n').trim();
+
+  // 🧠 Aplica LIMIT padrão se o usuário não definir
+  const hasLimit = /\blimit\b/i.test(fullQuery);
+  if (!hasLimit) {
+    fullQuery += `\nLIMIT 1000`;
+  }
+
+  fullQuery += ';';
 
   console.log('🧩 Query final montada no DAO:\n', fullQuery);
+  console.log('\n----------------------------------\n');
 
-  console.log('\n----------------------------------\n')
   try {
     const result = await prisma.$queryRawUnsafe(fullQuery);
 
@@ -87,6 +94,7 @@ async function builderQuery({
     throw err;
   }
 }
+
 
 
 module.exports = {

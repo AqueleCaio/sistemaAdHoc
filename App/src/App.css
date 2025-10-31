@@ -33,3 +33,119 @@ body {
   flex-direction: column;
   gap: 20px;
 }
+
+/* GlobalScrollbars.css */
+* {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #cccccc #ffffff;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background-color: #ffffff;
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #cccccc;
+  border-radius: 6px;
+  border: 2px solid #ffffff;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #aaaaaa;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: #ffffff;
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-corner {
+  background-color: #ffffff;
+}
+
+/* Containers com temas específicos */
+
+/* Tema escuro */
+.sql-content,
+.code-dark,
+.dark-container {
+  scrollbar-color: #565f89 #1a1b26;
+}
+
+.sql-content::-webkit-scrollbar,
+.code-dark::-webkit-scrollbar,
+.dark-container::-webkit-scrollbar {
+  background-color: #1a1b26;
+}
+
+.sql-content::-webkit-scrollbar-thumb,
+.code-dark::-webkit-scrollbar-thumb,
+.dark-container::-webkit-scrollbar-thumb {
+  background-color: #565f89;
+  border: 2px solid #1a1b26;
+}
+
+.sql-content::-webkit-scrollbar-thumb:hover,
+.code-dark::-webkit-scrollbar-thumb:hover,
+.dark-container::-webkit-scrollbar-thumb:hover {
+  background-color: #737aa2;
+}
+
+.sql-content::-webkit-scrollbar-track,
+.code-dark::-webkit-scrollbar-track,
+.dark-container::-webkit-scrollbar-track {
+  background-color: #1a1b26;
+}
+
+/* Tema cinza claro */
+.checkbox-group,
+.countries-list,
+.metrics-list,
+.list-container {
+  scrollbar-color: #cccccc #fafafa;
+}
+
+.checkbox-group::-webkit-scrollbar,
+.countries-list::-webkit-scrollbar,
+.metrics-list::-webkit-scrollbar,
+.list-container::-webkit-scrollbar {
+  background-color: #fafafa;
+}
+
+.checkbox-group::-webkit-scrollbar-thumb,
+.countries-list::-webkit-scrollbar-thumb,
+.metrics-list::-webkit-scrollbar-thumb,
+.list-container::-webkit-scrollbar-thumb {
+  background-color: #cccccc;
+  border: 2px solid #fafafa;
+}
+
+.checkbox-group::-webkit-scrollbar-track,
+.countries-list::-webkit-scrollbar-track,
+.metrics-list::-webkit-scrollbar-track,
+.list-container::-webkit-scrollbar-track {
+  background-color: #fafafa;
+}
+
+/* Tabela principal (mantendo estilo específico se necessário) */
+.table-container {
+  scrollbar-color: #cccccc #ffffff;
+}
+
+.table-container::-webkit-scrollbar {
+  background-color: #ffffff;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background-color: #cccccc;
+  border: 2px solid #ffffff;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background-color: #ffffff;
+}

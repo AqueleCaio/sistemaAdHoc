@@ -55,3 +55,5 @@
 [ ] Mudar o nome e o favinco
 
 [ ] Colocar um carregando... no botão de gerar relatório e no viewer quando o usuário clicar no botão de gerar relatório.
+
+[ ] Fazer opções de plotagem, gráfico de linhas ou de barra.

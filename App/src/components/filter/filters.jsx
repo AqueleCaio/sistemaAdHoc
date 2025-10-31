@@ -55,7 +55,7 @@ function FiltersSection({ columns, setFilters }) {
             value={filter.column}
             onChange={e => updateFilter(index, 'column', e.target.value)}
           >
-            <option value="">Selecione uma coluna</option>
+            <option value="">Colunas</option>
             {columns.map(col => (
               <option key={col.id} value={col.id}>
                 {col.name}
@@ -65,8 +65,7 @@ function FiltersSection({ columns, setFilters }) {
 
           {/* Operador */}
           <select
-            className="filter-select"
-            id='operators'
+            className="filter-select-operator"
             value={filter.operator}
             onChange={e => updateFilter(index, 'operator', e.target.value)}
           >

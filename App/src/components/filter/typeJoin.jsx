@@ -4,7 +4,10 @@ function TypeJoin({ joinType, setJoinType, question }) {
   return (
     <div className="section">
       <div className="section-title-with-tooltip">
-        <h3 className="section-title">Tipo de JOIN</h3>
+        <h3 className="section-title">
+          <span>🔗</span>
+          Tipo de JOIN
+        </h3>
         <div className="tooltip-container">
           <span className="tooltip-icon">
             <img src={question} alt="?" />

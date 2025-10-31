@@ -1,76 +1,109 @@
 .tabela {
-  background-color: #ffffff;
-  padding: 15px;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  width: 95%;
-  margin: 20px auto;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+  animation: slideUp 0.3s ease;
 }
 
 .tabela h2 {
-  color: #333333;
-  font-size: 16px;
-  margin: 0 0 15px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eeeeee;
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border-light);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .table-container {
-  width: 100%;
-  border: 1px solid #ccc;
-  overflow-x: auto; /* scroll horizontal se necessário */
-  overflow-y: auto; /* scroll vertical quando exceder altura */
-  max-height: 525px; /* altura padrão para 15 linhas */
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  overflow: auto;
+  background: white;
 }
 
-.tabela table {
+table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
-  min-width: 600px; /* evita colunas muito estreitas */
+  background: white;
+  font-size: 0.9rem;
 }
 
-.tabela th, .tabela td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid #dddddd;
-  white-space: nowrap; /* evita quebrar conteúdo */
-}
-
-.tabela th {
-  background-color: #f9f9f9;
+th {
+  background: var(--background-light);
   font-weight: 600;
-  color: #444444;
+  color: var(--text-dark);
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 10;
+  border-bottom: 2px solid var(--border-color);
 }
 
-.tabela tr:hover {
-  background-color: #f5f5f5;
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
 }
 
-.tabela td {
-  color: #555555;
+td {
+  color: var(--text-medium);
+  background: white;
+  transition: var(--transition);
 }
 
-/* Scrollbar personalizada */
-.table-container::-webkit-scrollbar {
-  width: 10px; /* largura da scrollbar vertical */
-  height: 10px; /* altura da scrollbar horizontal */
-  background-color: #ffffff; /* cor do track (fundo da barra) */
-  border-radius: 6px;
+tr:hover td {
+  background: var(--background-lighter);
 }
 
-.table-container::-webkit-scrollbar-thumb {
-  background-color: #cccccc; /* cor do "ponteiro" */
-  border-radius: 6px;
+tr:last-child td {
+  border-bottom: none;
 }
 
-.table-container::-webkit-scrollbar-thumb:hover {
-  background-color: #aaaaaa; /* cor do ponteiro ao passar o mouse */
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .tabela {
+    padding: 16px;
+    margin: 8px;
+  }
+
+  .tabela h2 {
+    font-size: 1.3rem;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    padding: 8px 12px;
+  }
 }
 
-.table-container::-webkit-scrollbar-track {
-  background-color: #ffffff; /* fundo da barra */
+@media (max-width: 480px) {
+  table {
+    font-size: 0.75rem;
+  }
+
+  th, td {
+    padding: 6px 8px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

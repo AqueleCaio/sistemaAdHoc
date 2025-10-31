@@ -8,7 +8,11 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
 
   return (
     <div className="section">
-      <h3 className="section-title">Tabelas Disponíveis</h3>
+      <h3 className="section-title">
+        <span>📋</span>
+        Tabelas Disponíveis
+      </h3>
+      
       <div className="dropbox_tables">
         <select
           className="filter-select"
@@ -17,7 +21,7 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
           disabled={uniqueTables.length === 0}
         >
           <option value="">
-            {uniqueTables.length === 0 ? 'Nenhuma opção disponível' : 'Selecione uma tabela'}
+            {uniqueTables.length === 0 ? 'Nenhuma opção disponível' : 'Tabelas'}
           </option>
           {uniqueTables.map((tableName) => (
             <option key={tableName} value={tableName}>
@@ -32,8 +36,9 @@ function Tables({ selectedTable, setSelectedTable, selectedTables, setSelectedTa
               {table}
               <button 
                 onClick={() => removeTable(table)}
-                className='remove_button'>
-                  x
+                className='remove_button'
+              >
+                ×
               </button>
             </div>
           ))}

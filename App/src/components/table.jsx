@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '../context/queryContext';
 import '../styles/Table.css';
 
 function Table() {
   const { result } = useQuery();
-  const { rows = [], columns = [] } = result;
+  const { rows = [], columns = [] } = result || {};
 
   if (!rows.length || !columns.length) {
     return (
@@ -15,9 +15,47 @@ function Table() {
     );
   }
 
+  // 🧩 Pré-tratamento dos dados
+  const processedRows = useMemo(() => {
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+
+    return rows.map(row => {
+      const newRow = {};
+
+      for (const col of columns) {
+        const key = col.dataKey;
+        let value = row[key];
+
+        // 🔍 Corrige tipos de dados
+        if (value === null || value === undefined) {
+          newRow[key] = '';
+        } 
+        else if (typeof value === 'number') {
+          // Se o nome da coluna indicar ano, id ou algo inteiro
+          if (key.toLowerCase().includes('ano') || key.toLowerCase().endsWith('_id')) {
+            newRow[key] = Math.round(value); // remove decimais
+          } else {
+            // Caso contrário, trata como valor monetário
+            newRow[key] = value.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          }
+        } 
+        else {
+          // Caso texto ou outro tipo
+          newRow[key] = value;
+        }
+      }
+
+      return newRow;
+    });
+  }, [rows, columns]);
+
+
   // Define altura máxima se houver mais de 15 linhas
   const maxRowsVisible = 15;
-  const rowHeight = 25; // altura aproximada da linha em px
+  const rowHeight = 40;
   const tableHeight = rows.length > maxRowsVisible ? maxRowsVisible * rowHeight : 'auto';
 
   return (
@@ -25,7 +63,10 @@ function Table() {
       <h2>Resultados do Relatório</h2>
       <div
         className="table-container"
-        style={{ maxHeight: tableHeight, overflowY: rows.length > maxRowsVisible ? 'auto' : 'visible' }}
+        style={{
+          maxHeight: tableHeight,
+          overflowY: rows.length > maxRowsVisible ? 'auto' : 'visible',
+        }}
       >
         <table>
           <thead>
@@ -36,7 +77,7 @@ function Table() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {processedRows.map((row, index) => (
               <tr key={index}>
                 {columns.map((col) => (
                   <td key={col.dataKey}>{row[col.dataKey]}</td>

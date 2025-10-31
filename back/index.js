@@ -8,11 +8,7 @@ const {
 } = require('./DAO/BDmain');
 
 const {
-  isNumeric,
-  quoteValue,
-  normalizeColumns,
-  normalizeAggregation,
-  helperDataReport,
+  helperDataReport
 } = require('./backController');
 
 BigInt.prototype.toJSON = function() {
