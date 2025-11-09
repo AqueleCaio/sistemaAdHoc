@@ -83,7 +83,7 @@ function helperDataReport(payload) {
     };
 
     // ----------------------------
-    // 3) Montar FROM e JOINs seguros
+    // 3) Montar FROM e JOINs seguros (versão final robusta)
     // ----------------------------
     const firstTable = typeof tables[0] === 'string' ? tables[0] : tables[0].name;
     let fromPart = firstTable;
@@ -92,35 +92,59 @@ function helperDataReport(payload) {
       for (let i = 1; i < tables.length; i++) {
         const t = tables[i];
         const name = typeof t === 'string' ? t : t.name;
-
-        let joinClause = '';
         const type = (t && t.type) ? t.type.toUpperCase() : joinType || 'INNER JOIN';
+        let joinClause = '';
 
-        // 1️⃣ Se o front definir manualmente a condição
+        // Se o front definiu manualmente o ON, respeitamos isso
         if (t?.on?.left && t?.on?.right) {
           joinClause = `${type} ${name} ON ${t.on.left} = ${t.on.right}`;
-        } else {
-          // 2️⃣ Tenta achar uma relação válida com QUALQUER tabela já incluída
-          const relatedTable = tables
-            .slice(0, i)
-            .map(tt => (typeof tt === 'string' ? tt : tt.name))
-            .find(prev => RELATIONS[name]?.[prev] || RELATIONS[prev]?.[name]);
+          fromPart += `\n${joinClause}`;
+          continue;
+        }
 
-          if (relatedTable && RELATIONS[name]?.[relatedTable]) {
-            const fk = `${name}.${RELATIONS[name][relatedTable]}`;
-            joinClause = `${type} ${name} ON ${fk} = ${relatedTable}.id`;
-          } else if (relatedTable && RELATIONS[relatedTable]?.[name]) {
-            const fk = `${relatedTable}.${RELATIONS[relatedTable][name]}`;
-            joinClause = `${type} ${name} ON ${fk} = ${name}.id`;
-          } else {
-            console.warn(`⚠️ Nenhuma relação encontrada para ${name}, JOIN ignorado.`);
-            continue;
+        const previousTables = tables.slice(0, i).map(tt => (typeof tt === 'string' ? tt : tt.name));
+        let found = false;
+
+        // Testa relação em ambas direções (sem inverter indevidamente)
+        for (const prev of previousTables) {
+          const relPrevToName = RELATIONS[prev]?.[name]; // Ex: RELATIONS.stores.sales = 'store_id'
+          const relNameToPrev = RELATIONS[name]?.[prev]; // Ex: RELATIONS.sales.stores = 'store_id'
+
+          if (relPrevToName && relNameToPrev) {
+            // Se existir nos dois lados, prioriza o lado onde o nome da FK termina com '_id'
+            if (relPrevToName.endsWith('_id')) {
+              joinClause = `${type} ${name} ON ${name}.${relNameToPrev} = ${prev}.id`;
+            } else {
+              joinClause = `${type} ${name} ON ${prev}.${relPrevToName} = ${name}.id`;
+            }
+            found = true;
+            break;
+          }
+
+          if (relPrevToName) {
+            // FK está na tabela anterior
+            joinClause = `${type} ${name} ON ${prev}.${relPrevToName} = ${name}.id`;
+            found = true;
+            break;
+          }
+
+          if (relNameToPrev) {
+            // FK está na tabela atual
+            joinClause = `${type} ${name} ON ${name}.${relNameToPrev} = ${prev}.id`;
+            found = true;
+            break;
           }
         }
-        fromPart += `\n${joinClause}`;
 
+        if (!found) {
+          console.warn(`⚠️ Nenhuma relação encontrada entre ${name} e tabelas anteriores (${previousTables.join(', ')}). JOIN ignorado.`);
+          continue;
+        }
+
+        fromPart += `\n${joinClause}`;
       }
     }
+
 
     const tableNames = ['pais', 'saude', 'tecnologia', 'ambiente', 'demografia', 'indicador', 'economia'];
 
